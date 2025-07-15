@@ -4,8 +4,12 @@ sequence_analysis_ui <- function(id) {
   ns <- NS(id)
   tabItem(
     tabName = "sequence_analysis",
-    # Remove the top fluidRow with Sequence Configuration and metric picker
-    # Remove the main sequence_plot chart
+    fluidRow(
+      box(
+        width = 12, status = "primary",
+        sliderInput(ns("sequence_length"), "Sequence Length:", min = 2, max = 20, value = 5, step = 1)
+      )
+    ),
     hr(),
     fluidRow(
       box(width = 6, status = "primary", plotlyOutput(ns("win_rate_by_sequence_chart"), height = "480px")),

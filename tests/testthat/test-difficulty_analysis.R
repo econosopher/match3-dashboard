@@ -1,0 +1,15 @@
+library(shinytest2)
+
+test_that("Difficulty Analysis tab charts are visible", {
+  app <- AppDriver$new("../../app.R")
+  app$set_inputs(tabs = "difficulty_analysis")
+  app$wait_for_value(output = "difficulty_dist_chart")
+  app$wait_for_value(output = "winstreak_by_difficulty_chart")
+  app$wait_for_value(output = "churn_by_difficulty_chart")
+  app$wait_for_value(output = "attempts_by_difficulty_chart")
+  expect_true(app$get_value(output = "difficulty_dist_chart")$visible)
+  expect_true(app$get_value(output = "winstreak_by_difficulty_chart")$visible)
+  expect_true(app$get_value(output = "churn_by_difficulty_chart")$visible)
+  expect_true(app$get_value(output = "attempts_by_difficulty_chart")$visible)
+  app$stop()
+}) 

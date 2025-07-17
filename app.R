@@ -82,16 +82,10 @@ ui <- dashboardPage(
                 .box {
                     border-top: 3px solid #0072B2;
                     background: #FFFFFF !important;
-                    min-height: 100px; /* Ensure box has a minimum height */
                 }
 
-                /* DT table background fix */
-                .dataTables_wrapper, .dataTables_wrapper .dataTable {
-                    background: #FFFFFF !important;
-                }
-
-                /* Ensure the container of the DT table has a white background */
-                .dataTables_wrapper .box-body {
+                /* Force the background of the level metrics tab content area to be white */
+                #shiny-tab-level_metrics {
                     background-color: #FFFFFF !important;
                 }
 

@@ -7,7 +7,6 @@ static_level_data_ui <- function(id) {
     fluidRow(
       box(width = 12, status = "info",
         title = "Static Level Data Filters",
-        column(2, uiOutput(ns("balance_patch_filter"))),
         column(2, uiOutput(ns("blocker_type_filter"))),
         column(2, uiOutput(ns("feature_introduced_filter"))),
         column(2, uiOutput(ns("move_limit_filter"))),
@@ -28,41 +27,57 @@ static_level_data_server <- function(id, data) {
     
     # Helper to get unique values safely
     get_choices <- function(col) {
-      if (!is.null(data) && col %in% names(data)) {
-        sort(unique(na.omit(data[[col]])))
+      df <- data() # Correctly access reactive data
+      if (!is.null(df) && col %in% names(df)) {
+        sort(unique(na.omit(df[[col]])))
       } else {
         character(0)
       }
     }
 
-    output$balance_patch_filter <- renderUI({
-      selectizeInput(ns("balance_patch"), "Balance Patch", choices = get_choices("balance_patch_version"), multiple = TRUE)
-    })
     output$blocker_type_filter <- renderUI({
-      selectizeInput(ns("blocker_type"), "Blocker Type", choices = get_choices("blocker_type"), multiple = TRUE)
+      selectizeInput(ns("blocker_type"), "Blocker Type", choices = NULL, multiple = TRUE,
+                     options = list(placeholder = 'Select a blocker type...'))
     })
+    observe({
+      updateSelectizeInput(session, "blocker_type", choices = get_choices("blocker_type"), server = TRUE)
+    })
+    
     output$feature_introduced_filter <- renderUI({
-      selectizeInput(ns("feature_introduced"), "Feature Introduced", choices = get_choices("feature_introduced"), multiple = TRUE)
+      selectizeInput(ns("feature_introduced"), "Feature Introduced", choices = get_choices("feature_introduced"), multiple = TRUE,
+                     options = list(placeholder = 'Select a feature...'))
     })
     output$move_limit_filter <- renderUI({
-      selectizeInput(ns("move_limit"), "Move Limit", choices = get_choices("move_limit"), multiple = TRUE)
+      selectizeInput(ns("move_limit"), "Move Limit", choices = NULL, multiple = TRUE,
+                     options = list(placeholder = 'Select a move limit...'))
     })
+    observe({
+      updateSelectizeInput(session, "move_limit", choices = get_choices("move_limit"), server = TRUE)
+    })
+    
     output$objective_type_filter <- renderUI({
-      selectizeInput(ns("objective_type"), "Objective Type", choices = get_choices("objective_type"), multiple = TRUE)
+      selectizeInput(ns("objective_type"), "Objective Type", choices = get_choices("objective_type"), multiple = TRUE,
+                     options = list(placeholder = 'Select an objective type...'))
     })
     output$objective_amount_filter <- renderUI({
-      selectizeInput(ns("objective_amount"), "Objective Amount", choices = get_choices("objective_amount"), multiple = TRUE)
+      selectizeInput(ns("objective_amount"), "Objective Amount", choices = NULL, multiple = TRUE,
+                     options = list(placeholder = 'Select an amount...'))
     })
+    observe({
+      updateSelectizeInput(session, "objective_amount", choices = get_choices("objective_amount"), server = TRUE)
+    })
+
     output$level_number_filter <- renderUI({
-      selectizeInput(ns("level_number"), "Level Number", choices = get_choices("level_number"), multiple = TRUE)
+      selectizeInput(ns("level_number"), "Level Number", choices = NULL, multiple = TRUE,
+                     options = list(placeholder = 'Select a level number...'))
+    })
+    observe({
+      updateSelectizeInput(session, "level_number", choices = get_choices("level_number"), server = TRUE)
     })
 
     filtered_data <- reactive({
-      df <- data
+      df <- data() # Correctly access reactive data
       req(df)
-      if (!is.null(input$balance_patch) && length(input$balance_patch) > 0) {
-        df <- df[df$balance_patch_version %in% input$balance_patch, ]
-      }
       if (!is.null(input$blocker_type) && length(input$blocker_type) > 0) {
         df <- df[df$blocker_type %in% input$blocker_type, ]
       }
@@ -87,7 +102,12 @@ static_level_data_server <- function(id, data) {
     output$static_dt_table <- DT::renderDataTable({
       df <- filtered_data()
       req(df)
-      DT::datatable(df, options = list(pageLength = 50, scrollX = TRUE))
+      DT::datatable(df, options = list(pageLength = 50, scrollX = TRUE),
+                    class = 'compact hover row-border stripe',
+                    callback = JS(
+                      "$(table.table().node()).css({'font-size': '11px'});",
+                      "$(table.table().node()).find('td').css({'padding': '4px 2px'});"
+                    ))
     })
   })
 } 

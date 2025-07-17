@@ -8,7 +8,7 @@ level_metrics_table_ui <- function(id) {
   )
 }
 
-level_metrics_table_server <- function(id, data, difficulty_levels, okabe_ito) {
+level_metrics_table_server <- function(id, data, difficulty_colors) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     output$level_dt_table <- DT::renderDataTable({
@@ -47,11 +47,14 @@ level_metrics_table_server <- function(id, data, difficulty_levels, okabe_ito) {
       for (col in intersect(int_cols, names(df_fmt))) {
         df_fmt[[col]] <- as.integer(round(df_fmt[[col]]))
       }
-      color_map <- setNames(okabe_ito[1:length(difficulty_levels)], difficulty_levels)
+      
+      # Use the reactive difficulty_colors value
+      colors <- difficulty_colors()
+      
       df_fmt$labeled_difficulty <- ifelse(
         is.na(df_fmt$labeled_difficulty),
         "",
-        paste0('<span style="color:white; background:', color_map[df_fmt$labeled_difficulty], '; border-radius:4px; padding:2px 8px;">', df_fmt$labeled_difficulty, '</span>')
+        paste0('<span style="color:white; background:', colors[df_fmt$labeled_difficulty], '; border-radius:4px; padding:2px 8px;">', df_fmt$labeled_difficulty, '</span>')
       )
       DT::datatable(
         df_fmt,

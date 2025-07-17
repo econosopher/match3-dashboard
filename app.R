@@ -47,7 +47,7 @@ ui <- dashboardPage(
                 menuSubItem("Sequence Analysis", tabName = "sequence_analysis", icon = icon("stream"))
             ),
             menuItem("Static Level Data", tabName = "static_level_data", icon = icon("filter")),
-            # --- Global controls in sidebar ---
+            uiOutput("balance_patch_selector_ui"),
             fileInput("file1", "Upload Level Data CSV", accept = ".csv"),
             uiOutput("level_range_slider")
         )
@@ -120,70 +120,26 @@ server <- function(input, output, session) {
     # --- Aesthetics and Configuration ---
     # Okabe-Ito palette for categorical, Viridis for continuous
     okabe_ito <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
-    difficulty_levels <- c("Easy", "Medium", "Hard", "Very Hard", "Insane")
-    difficulty_colors <- setNames(okabe_ito[1:length(difficulty_levels)], difficulty_levels)
-
-    # --- Helper Functions ---
-
-    #' Generate a standardized scatter plot against level number.
-    #' @param df The dataframe to use.
-    #' @param y_var The name of the column for the y-axis.
-    #' @param title The plot title.
-    #' @param y_lab The y-axis label.
-    #' @param color_var The column to use for coloring points and lines.
-    #' @param color_lab The label for the color legend.
-    #' @param y_percent TRUE to format the y-axis as percentages.
-    #' @return A plotly object.
-    generate_level_scatter <- function(df, y_var, title, y_lab, color_var = "labeled_difficulty", color_lab = "Difficulty", y_percent = FALSE) {
-        req(y_var %in% names(df), color_var %in% names(df))
-        p <- ggplot(df, aes(x = level_number, y = .data[[y_var]])) +
-            geom_point(aes(color = .data[[color_var]], text = paste("Level:", level_number)), alpha = 0.5) +
-            geom_smooth(aes(color = .data[[color_var]]), method = "loess", se = FALSE, linewidth = 0.8) +
-            labs(title = title, x = "Level Number", y = y_lab, color = color_lab) +
-            theme_fivethirtyeight() +
-            theme(text = element_text(family = "Inter"))
-
-        if (color_var == "labeled_difficulty") {
-            p <- p + scale_color_manual(values = difficulty_colors)
-        }
-
-        if (y_percent) {
-            p <- p + scale_y_continuous(labels = scales::percent)
-        }
-
-        ggplotly(p, tooltip = "text")
+    get_difficulty_levels <- function(df) {
+        lvls <- unique(na.omit(as.character(df$labeled_difficulty)))
+        lvls[order(lvls)]
+    }
+    get_difficulty_colors <- function(levels) {
+        setNames(okabe_ito[seq_along(levels)], levels)
     }
 
-    #' Generate a standardized boxplot by difficulty.
-    #' @param df The dataframe to use.
-    #' @param y_var The column for the y-axis.
-    #' @param title The plot title.
-    #' @param y_lab The y-axis label.
-    #' @param y_percent TRUE to format the y-axis as percentages.
-    #' @return A plotly object.
-    generate_difficulty_boxplot <- function(df, y_var, title, y_lab, y_percent = FALSE) {
-        req(y_var %in% names(df))
-        p <- ggplot(df, aes(x = labeled_difficulty, y = .data[[y_var]], fill = labeled_difficulty)) +
-            geom_boxplot(alpha = 0.7) +
-            labs(title = title, x = "Difficulty Label", y = y_lab) +
-            theme_fivethirtyeight() +
-            theme(text = element_text(family = "Inter")) +
-            scale_fill_manual(values = difficulty_colors) +
-            guides(fill = "none")
-
-        if (y_percent) {
-            p <- p + scale_y_continuous(labels = scales::percent)
-        }
-
-        ggplotly(p)
-    }
-
-
+    # --- Reactive Values and Data Processing ---
+    
     rv <- reactiveValues(missing_headers = NULL, data = NULL)
+    
+    difficulty_colors <- reactive({
+      req(rv$data)
+      get_difficulty_colors(get_difficulty_levels(rv$data))
+    })
 
     observe({
         if (is.null(input$file1)) {
-            df <- read.csv("examples/jelly_match.csv")
+            df <- read.csv("examples/Level Data for Audit.csv")
         } else {
             df <- read.csv(input$file1$datapath)
         }
@@ -199,7 +155,9 @@ server <- function(input, output, session) {
 
     calculated_data <- reactive({
         req(rv$data)
-        rv$data %>%
+        df <- rv$data
+        difficulty_levels <- get_difficulty_levels(df)
+        df %>%
         mutate(
             labeled_difficulty = factor(labeled_difficulty, levels = difficulty_levels, ordered = TRUE),
             win_rate = ifelse(attempts > 0, wins / attempts, 0),
@@ -216,10 +174,37 @@ server <- function(input, output, session) {
         )
     })
 
+    observe({
+        df <- rv$data
+        updateSelectizeInput(session, "sidebar_balance_patch", choices = sort(unique(na.omit(df$balance_patch_version))), server = TRUE)
+    })
+
     filtered_data <- reactive({
         req(calculated_data(), input$level_range)
-        calculated_data() %>%
-            filter(level_number >= input$level_range[1] & level_number <= input$level_range[2])
+        df <- calculated_data()
+        
+        # Filter by sidebar balance patch
+        if (!is.null(input$sidebar_balance_patch) && input$sidebar_balance_patch != "") {
+            df <- df[df$balance_patch_version == input$sidebar_balance_patch, ]
+        }
+        
+        df <- df[df$level_number >= input$level_range[1] & df$level_number <= input$level_range[2], ]
+        df
+    })
+
+    # --- Server Modules ---
+    level_metrics_table_server("metrics", filtered_data, difficulty_colors)
+    difficulty_analysis_server("difficulty", filtered_data, difficulty_colors)
+    core_gameplay_server("coregame", filtered_data, difficulty_colors)
+    economy_analysis_server("economy", filtered_data, difficulty_colors)
+    sequence_analysis_server("sequence", filtered_data)
+    static_level_data_server("staticdata", reactive(rv$data))
+
+    output$balance_patch_selector_ui <- renderUI({
+      req(rv$data)
+      patches <- sort(unique(na.omit(rv$data$balance_patch_version)), decreasing = TRUE)
+      selectizeInput("sidebar_balance_patch", "Balance Patch Version", 
+                     choices = patches, selected = patches[1], multiple = FALSE)
     })
 
     # --- Global controls only ---
@@ -235,14 +220,6 @@ server <- function(input, output, session) {
             )
         }
     })
-
-    # --- Module servers ---
-    difficulty_analysis_server("difficulty", filtered_data, difficulty_colors)
-    core_gameplay_server("coregame", filtered_data, difficulty_colors)
-    economy_analysis_server("economy", filtered_data, difficulty_colors)
-    sequence_analysis_server("sequence", filtered_data)
-    level_metrics_table_server("metrics", filtered_data, difficulty_levels, okabe_ito)
-    static_level_data_server("staticdata", rv$data)
 }
 
 # --- Sequence Grouped Data Helper ---

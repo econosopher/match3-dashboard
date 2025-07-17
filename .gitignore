@@ -25,3 +25,4 @@ rsconnect/
 
 # macOS files
 .DS_Store 
+examples/jelly_match.csv 

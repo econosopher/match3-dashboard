@@ -83,3 +83,19 @@ dir.create("examples", showWarnings = FALSE)
 write_csv(level_data, output_path)
 
 message("Successfully generated new sample data at ", output_path) 
+
+# ---- Download Google Sheet as CSV ----
+library(googlesheets4)
+library(readr)
+
+# Authenticate (will prompt in browser on first run)
+gs4_auth()
+
+# Google Sheet URL
+gsheet_url <- "https://docs.google.com/spreadsheets/d/1jyvksP9QFqVJIxweYVwAbDAwi61nfVhDhFrTHI_ZbSw/edit#gid=124767169"
+
+# Read the sheet (first sheet by default)
+df <- read_sheet(gsheet_url)
+
+# Save as CSV in examples/
+write_csv(df, "examples/jelly_match.csv") 

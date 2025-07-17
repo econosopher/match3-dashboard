@@ -9,6 +9,7 @@ source("modules/core_gameplay.R")
 source("modules/economy_analysis.R")
 source("modules/sequence_analysis.R")
 source("modules/level_metrics_table.R")
+source("modules/static_level_data.R")
 
 # 1. Set global font for all ggplot charts
 suppressPackageStartupMessages(library(ggplot2))
@@ -45,6 +46,7 @@ ui <- dashboardPage(
                 menuSubItem("Economy Analysis", tabName = "economy_analysis", icon = icon("coins")),
                 menuSubItem("Sequence Analysis", tabName = "sequence_analysis", icon = icon("stream"))
             ),
+            menuItem("Static Level Data", tabName = "static_level_data", icon = icon("filter")),
             # --- Global controls in sidebar ---
             fileInput("file1", "Upload Level Data CSV", accept = ".csv"),
             uiOutput("level_range_slider")
@@ -105,7 +107,8 @@ ui <- dashboardPage(
             difficulty_analysis_ui("difficulty"),
             core_gameplay_ui("coregame"),
             economy_analysis_ui("economy"),
-            sequence_analysis_ui("sequence")
+            sequence_analysis_ui("sequence"),
+            static_level_data_ui("staticdata")
         )
     ),
     skin = "blue"
@@ -180,7 +183,7 @@ server <- function(input, output, session) {
 
     observe({
         if (is.null(input$file1)) {
-            df <- read.csv("examples/sample_level_data.csv")
+            df <- read.csv("examples/jelly_match.csv")
         } else {
             df <- read.csv(input$file1$datapath)
         }
@@ -239,6 +242,7 @@ server <- function(input, output, session) {
     economy_analysis_server("economy", filtered_data, difficulty_colors)
     sequence_analysis_server("sequence", filtered_data)
     level_metrics_table_server("metrics", filtered_data, difficulty_levels, okabe_ito)
+    static_level_data_server("staticdata", rv$data)
 }
 
 # --- Sequence Grouped Data Helper ---

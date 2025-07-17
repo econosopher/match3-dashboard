@@ -83,6 +83,17 @@ sequence_analysis_server <- function(id, data) {
         ) %>%
         ungroup()
 
+      # Create ordered factor for level ranges to ensure descending order in the legend
+      if (nrow(df) > 0) {
+        ordered_labels <- df %>%
+          distinct(group_num, level_range_label) %>%
+          arrange(desc(group_num)) %>%
+          pull(level_range_label)
+        
+        df <- df %>%
+          mutate(level_range_label = factor(level_range_label, levels = ordered_labels, ordered = TRUE))
+      }
+
       metric <- input$sequence_metric
       req(metric %in% names(df))
 

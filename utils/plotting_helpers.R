@@ -4,32 +4,51 @@
 #' @param df The dataframe to use.
 #' @param y_var The name of the column for the y-axis.
 #' @param title The plot title.
+#' @param subtitle The plot subtitle.
 #' @param y_lab The y-axis label.
 #' @param color_var The column to use for coloring points and lines.
 #' @param color_lab The label for the color legend.
 #' @param y_percent TRUE to format the y-axis as percentages.
 #' @return A plotly object.
-generate_level_scatter <- function(df, y_var, title, y_lab, color_var = "labeled_difficulty", color_lab = "Difficulty", y_percent = FALSE, difficulty_colors = NULL) {
+generate_level_scatter <- function(df, y_var, title, y_lab, subtitle = NULL, color_var = "labeled_difficulty", color_lab = "Difficulty", y_percent = FALSE, difficulty_colors = NULL) {
   req(y_var %in% names(df), color_var %in% names(df))
   
-  p <- ggplot(df, aes(x = level_number, y = .data[[y_var]])) +
-    geom_point(aes(color = .data[[color_var]], text = paste("Level:", level_number)), alpha = 0.5) +
-    geom_smooth(aes(color = .data[[color_var]]), method = "loess", se = FALSE, linewidth = 0.8) +
-    labs(title = title, x = "Level Number", y = y_lab, color = color_lab) +
-    theme_fivethirtyeight() +
-    theme(text = element_text(family = "Inter"))
-
-  # Only apply manual color scale if the color variable is "labeled_difficulty"
-  # and a color mapping has been provided.
-  if (!is.null(difficulty_colors) && color_var == "labeled_difficulty") {
-    p <- p + scale_color_manual(values = difficulty_colors)
+  # Ensure the color variable exists in the dataframe
+  if (!color_var %in% names(df)) {
+    stop(paste("Color variable '", color_var, "' not found in dataframe."))
   }
 
+  p <- ggplot(df, aes(x = level_number, y = .data[[y_var]], color = .data[[color_var]], group = .data[[color_var]])) +
+    geom_point(aes(text = paste("Level:", level_number)), alpha = 0.6)
+  
+  # Add geom_smooth only if there are enough points to do so
+  if (nrow(df) > 2) {
+    p <- p + geom_smooth(method = "loess", se = FALSE)
+  }
+  
+  p <- p +
+    labs(x = "Level Number", y = y_lab, color = color_lab) +
+    theme_fivethirtyeight() +
+    theme(text = element_text(family = "Inter"))
+  
   if (y_percent) {
     p <- p + scale_y_continuous(labels = scales::percent)
   }
-
-  ggplotly(p, tooltip = "text")
+  
+  # Add difficulty color scale if applicable and provided
+  if (!is.null(difficulty_colors) && color_var == "labeled_difficulty") {
+    p <- p + scale_color_manual(values = difficulty_colors)
+  }
+  
+  plot <- ggplotly(p, tooltip = "text")
+  
+  if (!is.null(subtitle)) {
+    plot <- plot %>% layout(title = list(text = paste0(title, "<br><sup>", subtitle, "</sup>"), x = 0))
+  } else {
+    plot <- plot %>% layout(title = list(text = title, x = 0))
+  }
+  
+  plot
 }
 
 #' Generate a standardized boxplot by difficulty.

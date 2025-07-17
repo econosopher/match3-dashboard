@@ -82,12 +82,18 @@ ui <- dashboardPage(
                 .box {
                     border-top: 3px solid #0072B2;
                     background: #FFFFFF !important;
+                    min-height: 100px; /* Ensure box has a minimum height */
                 }
+
                 /* DT table background fix */
-                .dataTables_wrapper .dataTable { background: transparent !important; }
+                .dataTables_wrapper, .dataTables_wrapper .dataTable {
+                    background: #FFFFFF !important;
+                }
 
                 /* Ensure the container of the DT table has a white background */
-                .dataTables_wrapper .box-body { background-color: #FFFFFF !important; }
+                .dataTables_wrapper .box-body {
+                    background-color: #FFFFFF !important;
+                }
 
                 .box-body { padding: 0 6px 6px 6px !important; }
                 label[for='file1'], .shiny-input-container label, .irs-single, .irs-bar, .irs-bar-edge, .irs-line { color: #222 !important; font-weight: 600; }

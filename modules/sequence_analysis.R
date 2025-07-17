@@ -74,12 +74,15 @@ sequence_analysis_server <- function(id, data) {
       group_size <- input$sequence_length
       df <- df %>%
         mutate(
-          group = floor((level_number - 1) / group_size) + 1,
+          group_num = floor((level_number - 1) / group_size)
+        ) %>%
+        group_by(group_num) %>%
+        mutate(
+          level_range_label = paste0("L", min(level_number), "-L", max(level_number)),
           window_index = (level_number - 1) %% group_size + 1
         ) %>%
-        # Ensure group is a factor for clear labeling in the plot
-        mutate(group = as.factor(group))
-        
+        ungroup()
+
       metric <- input$sequence_metric
       req(metric %in% names(df))
 
@@ -87,7 +90,7 @@ sequence_analysis_server <- function(id, data) {
       df <- df %>%
         mutate(hover_text = paste(
           "Level:", level_number,
-          "<br>Group:", group,
+          "<br>Group:", level_range_label,
           "<br>Index:", window_index,
           "<br>", snakecase::to_title_case(metric), ":", round(.data[[metric]], 2)
         ))
@@ -95,9 +98,9 @@ sequence_analysis_server <- function(id, data) {
       df <- df %>% filter(!is.na(.data[[metric]]))
       if(nrow(df) == 0) return(plotly_empty(type = "scatter", mode = "markers") %>% layout(title = "No data available"))
       
-      p <- ggplot(df, aes(x = window_index, y = .data[[metric]], color = group, text = hover_text)) +
+      p <- ggplot(df, aes(x = window_index, y = .data[[metric]], color = level_range_label, group = level_range_label, text = hover_text)) +
         geom_point(size = 2, alpha = 0.6) +
-        geom_line(aes(group = group), alpha = 0.4) +
+        geom_line(alpha = 0.4) +
         labs(
           title = paste("Indexed Sequence Analysis:", snakecase::to_title_case(metric)),
           x = "Level Index within Sequence",

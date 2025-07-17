@@ -12,6 +12,22 @@ sequence_analysis_ui <- function(id) {
     ),
     hr(),
     fluidRow(
+      box(
+        width = 12, status = "primary",
+        selectInput(ns("sequence_metric"), "Metric:",
+                    choices = c(
+                      "Attempts per Success" = "attempts_per_success",
+                      "Win Rate" = "win_rate",
+                      "Churn Rate" = "churn_rate",
+                      "Near Win Rate" = "near_win_rate",
+                      "Near Loss Rate" = "near_loss_rate"
+                    ),
+                    selected = "attempts_per_success"),
+        plotlyOutput(ns("sequence_indexed_plot"), height = "480px")
+      )
+    ),
+    hr(),
+    fluidRow(
       box(width = 6, status = "primary", plotlyOutput(ns("win_rate_by_sequence_chart"), height = "480px")),
       box(width = 6, status = "primary", plotlyOutput(ns("churn_rate_by_sequence_chart"), height = "480px"))
     )
@@ -50,6 +66,48 @@ sequence_analysis_server <- function(id, data) {
     observeEvent(sequence_data(), {
       if(is.null(input$sequence_metric))
         updateSelectInput(session, "sequence_metric", selected = "win_rate")
+    })
+
+    output$sequence_indexed_plot <- renderPlotly({
+      req(data(), input$sequence_length, input$sequence_metric)
+      df <- data()
+      group_size <- input$sequence_length
+      df <- df %>%
+        mutate(
+          group = floor((level_number - 1) / group_size) + 1,
+          window_index = (level_number - 1) %% group_size + 1
+        ) %>%
+        # Ensure group is a factor for clear labeling in the plot
+        mutate(group = as.factor(group))
+        
+      metric <- input$sequence_metric
+      req(metric %in% names(df))
+
+      # Generate hover text
+      df <- df %>%
+        mutate(hover_text = paste(
+          "Level:", level_number,
+          "<br>Group:", group,
+          "<br>Index:", window_index,
+          "<br>", snakecase::to_title_case(metric), ":", round(.data[[metric]], 2)
+        ))
+        
+      df <- df %>% filter(!is.na(.data[[metric]]))
+      if(nrow(df) == 0) return(plotly_empty(type = "scatter", mode = "markers") %>% layout(title = "No data available"))
+      
+      p <- ggplot(df, aes(x = window_index, y = .data[[metric]], color = group, text = hover_text)) +
+        geom_point(size = 2, alpha = 0.6) +
+        geom_line(aes(group = group), alpha = 0.4) +
+        labs(
+          title = paste("Indexed Sequence Analysis:", snakecase::to_title_case(metric)),
+          x = "Level Index within Sequence",
+          y = snakecase::to_title_case(metric),
+          color = "Level Sequence Group"
+        ) +
+        theme_fivethirtyeight() +
+        theme(text = element_text(family = "Inter"), legend.position = "bottom")
+        
+      ggplotly(p, tooltip = "text")
     })
 
     output$sequence_plot <- renderPlotly({

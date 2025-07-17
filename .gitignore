@@ -1,0 +1,27 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# User-specific files
+.Rproj.user/
+
+# R Environment files
+.Renviron
+
+# Knitr cache, session builds
+_*.Rmd_cache/
+*_cache/
+/cache/
+
+# Shiny token files
+rsconnect/
+
+# Package archives
+*.tar.gz
+*.Rcheck/
+
+# macOS files
+.DS_Store 

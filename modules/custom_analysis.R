@@ -60,14 +60,15 @@ custom_analysis_server <- function(id, data) {
         geom_point(aes(text = paste("Level:", level_number, 
                                     "<br>Difficulty:", labeled_difficulty)), alpha = 0.6) +
         geom_smooth(method = "loess", se = FALSE) +
+        theme_fivethirtyeight() +
+        theme(text = element_text(family = "Inter")) +
         labs(
           title = paste(input$y_axis, "vs.", input$x_axis),
           subtitle = NULL,
           x = input$x_axis,
           y = input$y_axis
-        ) +
-        theme_fivethirtyeight() +
-        theme(text = element_text(family = "Inter"))
+        )
+        
 
       ggplotly(p, tooltip = "text")
     })

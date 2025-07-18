@@ -3,7 +3,7 @@
 # --- Libraries ---
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
-  shiny, shinydashboard, shinyjs, DT, ggplot2, dplyr, gt, 
+  scales, shiny, shinydashboard, shinyjs, DT, ggplot2, dplyr, gt, 
   gtExtras, plotly, ggthemes, ggridges, snakecase, tidyr
 )
 
@@ -58,6 +58,16 @@ sequence_grouped_data <- function(df, sequence_length) {
             retained_at_end = last(retained_players_to_next_level, order_by = level_number),
             win_rate = ifelse(total_attempts > 0, total_wins / total_attempts, 0),
             churn_rate = ifelse(total_players > 0, 1 - (retained_at_end / total_players), 0),
+            attempts_per_success = ifelse(total_wins > 0, total_attempts / total_wins, NA),
+            first_attempt_win_streak_tier_1 = sum(first_attempt_win_streak_tier_1, na.rm = TRUE),
+            first_attempt_win_streak_tier_2 = sum(first_attempt_win_streak_tier_2, na.rm = TRUE),
+            first_attempt_win_streak_tier_3 = sum(first_attempt_win_streak_tier_3, na.rm = TRUE),
+            first_attempt_winstreak_tier_1_wins = sum(first_attempt_winstreak_tier_1_wins, na.rm = TRUE),
+            first_attempt_winstreak_tier_2_wins = sum(first_attempt_winstreak_tier_2_wins, na.rm = TRUE),
+            first_attempt_winstreak_tier_3_wins = sum(first_attempt_winstreak_tier_3_wins, na.rm = TRUE),
+            winstreak_tier_1_attempt_rate = ifelse(total_players > 0, first_attempt_win_streak_tier_1 / total_players, NA),
+            winstreak_tier_2_attempt_rate = ifelse(total_players > 0, first_attempt_win_streak_tier_2 / total_players, NA),
+            winstreak_tier_3_attempt_rate = ifelse(total_players > 0, first_attempt_win_streak_tier_3 / total_players, NA),
             .groups = 'drop'
         )
 } 

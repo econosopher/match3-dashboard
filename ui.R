@@ -25,13 +25,13 @@ ui <- fluidPage(
                 dashboardSidebar(
                     sidebarMenu(
                         id = "tabs",
-                        menuItem("Static Level Data", tabName = "static_level_data", icon = icon("database")),
                         menuItem("Difficulty Analysis", tabName = "difficulty_analysis", icon = icon("chart-line")),
                         menuItem("Core Gameplay", tabName = "core_gameplay", icon = icon("gamepad")),
                         menuItem("Economy Analysis", tabName = "economy_analysis", icon = icon("dollar-sign")),
                         menuItem("Sequence Analysis", tabName = "sequence_analysis", icon = icon("sort-numeric-up")),
                         menuItem("Level Metrics", tabName = "level_metrics", icon = icon("table")),
                         menuItem("Custom Analysis", tabName = "custom_analysis", icon = icon("search")),
+                        menuItem("Static Level Data", tabName = "static_level_data", icon = icon("database")),
 
                         # Add the balance patch filter UI component
                         uiOutput("balance_patch_filter_ui"),

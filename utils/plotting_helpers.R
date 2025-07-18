@@ -27,7 +27,13 @@ generate_level_scatter <- function(df, y_var, title, y_lab, subtitle = NULL, col
   }
   
   p <- p +
-    labs(x = "Level Number", y = y_lab, color = color_lab) +
+    labs(
+      title = title,
+      subtitle = subtitle,
+      x = "Level Number",
+      y = y_lab,
+      color = color_lab
+    ) +
     theme_fivethirtyeight() +
     theme(text = element_text(family = "Inter"))
   
@@ -43,9 +49,9 @@ generate_level_scatter <- function(df, y_var, title, y_lab, subtitle = NULL, col
   plot <- ggplotly(p, tooltip = "text")
   
   if (!is.null(subtitle)) {
-    plot <- plot %>% layout(title = list(text = paste0(title, "<br><sup>", subtitle, "</sup>"), x = 0))
+    plot 
   } else {
-    plot <- plot %>% layout(title = list(text = title, x = 0))
+    plot 
   }
   
   plot

@@ -84,11 +84,14 @@ server <- function(input, output, session) {
                      multiple = TRUE)
     })
     
-    # Render UI for level range slider
+    # Render UI for level range numeric inputs
     output$level_range_slider <- renderUI({
         req(rv$data)
         max_level <- max(rv$data$level_number, na.rm = TRUE)
-        sliderInput("level_range", "Filter Level Range:", min = 1, max = max_level, value = c(1, 60), step = 1)
+        tagList(
+          numericInput("level_min", "Min Level:", value = 1, min = 1, max = max_level, step = 1),
+          numericInput("level_max", "Max Level:", value = 60, min = 1, max = max_level, step = 1)
+        )
     })
 
     # Reactive expression for filtered data based on balance patch
@@ -109,8 +112,8 @@ server <- function(input, output, session) {
         data <- data %>% filter(labeled_difficulty %in% input$difficulty_filter)
       }
       
-      if (!is.null(input$level_range)) {
-        data <- data %>% filter(level_number >= input$level_range[1] & level_number <= input$level_range[2])
+      if (!is.null(input$level_min) && !is.null(input$level_max)) {
+        data <- data %>% filter(level_number >= input$level_min & level_number <= input$level_max)
       }
       
       data
@@ -133,7 +136,11 @@ server <- function(input, output, session) {
             winstreak_tier_0_rate = ifelse(players > 0, first_attempt_win_streak_tier_0 / players, 0),
             winstreak_tier_1_rate = ifelse(players > 0, first_attempt_win_streak_tier_1 / players, 0),
             winstreak_tier_2_rate = ifelse(players > 0, first_attempt_win_streak_tier_2 / players, 0),
-            winstreak_tier_3_rate = ifelse(players > 0, first_attempt_win_streak_tier_3 / players, 0)
+            winstreak_tier_3_rate = ifelse(players > 0, first_attempt_win_streak_tier_3 / players, 0),
+            winstreak_tier_0_attempt_rate = ifelse(wins > 0, first_attempt_win_streak_tier_0 / wins, NA),
+            winstreak_tier_1_attempt_rate = ifelse(wins > 0, first_attempt_win_streak_tier_1 / wins, NA),
+            winstreak_tier_2_attempt_rate = ifelse(wins > 0, first_attempt_win_streak_tier_2 / wins, NA),
+            winstreak_tier_3_attempt_rate = ifelse(wins > 0, first_attempt_win_streak_tier_3 / wins, NA)
         )
     })
 

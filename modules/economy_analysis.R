@@ -59,16 +59,12 @@ economy_analysis_server <- function(id, data, difficulty_colors, okabe_ito) {
         scale_color_manual(values = okabe_ito) +
         labs(
           title = "Gold Inventory by Level", 
+          subtitle = "median_gold_inventory_amount_first_attempt",
           x = "Level Number", y = "Gold Inventory", color = "Inventory Type") +
         theme_fivethirtyeight() +
         theme(text = element_text(family = "Inter"))
       
-      ggplotly(p) %>%
-        layout(title = list(text = paste0("Gold Inventory by Level",
-                                          "<br>",
-                                          "<sup>",
-                                          "median_gold_inventory_amount_first_attempt",
-                                          "</sup>"), x = 0))
+      ggplotly(p)
     })
   })
 } 
